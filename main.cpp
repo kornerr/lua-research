@@ -18,12 +18,10 @@ void load(const char *fileName, int *width, int *height)
     if (!lua_isnumber(L, -2))
     {
         printf("'width' should be a number\n");
-        lua_pop(L, 1);
     }
     if (!lua_isnumber(L, -1))
     {
         printf("'height' should be a number\n");
-        lua_pop(L, 1);
     }
     *width = (int)lua_tonumber(L, -2);
     *height = (int)lua_tonumber(L, -1);

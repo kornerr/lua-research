@@ -1,3 +1,3 @@
 -- Some comment
-width = 2000
+width = 200
 height = 300
