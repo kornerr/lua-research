@@ -5,7 +5,7 @@
 
 const int MAX_COLOR = 255;
 
-struct ColorTable
+struct Color
 {
     const char *name;
     unsigned char red;
@@ -13,7 +13,7 @@ struct ColorTable
     unsigned char blue;
 };
 
-ColorTable colorTable[] =
+Color predefinedColors[] =
 {
     {"WHITE", MAX_COLOR, MAX_COLOR, MAX_COLOR},
     {"BLACK", 0, 0, 0},
@@ -22,6 +22,15 @@ ColorTable colorTable[] =
     {"BLUE", 0, 0, MAX_COLOR},
     {0, 0, 0, 0}, // Sentinel.
 };
+
+// Assume table is at the top of the stack, i.e., it has '-1' index.
+int setTableField(lua_State *L, const char *key, int value)
+{
+    int result = -1;
+    lua_pushstring(L, key);
+    lua_pushnumber(L, (double)value / MAX_COLOR);
+    lua_settable(L, -3);
+}
 
 // Assume table is at the top of the stack, i.e., it has '-1' index.
 int tableField(lua_State *L, const char *key)
@@ -38,10 +47,19 @@ int tableField(lua_State *L, const char *key)
     }
     else
     {
-        result = (int)lua_tonumber(L, -1) * MAX_COLOR;
+        result = (double)lua_tonumber(L, -1) * MAX_COLOR;
     }
     lua_pop(L, 1);
     return result;
+}
+
+void setColor(lua_State *L, Color *color)
+{
+    lua_newtable(L);
+    setTableField(L, "r", color->red);
+    setTableField(L, "g", color->green);
+    setTableField(L, "b", color->blue);
+    lua_setglobal(L, color->name);
 }
 
 bool loadLuaFile(lua_State *L, const char *fileName)
@@ -85,6 +103,36 @@ void readWidthHeight(lua_State *L, int *width, int *height)
     lua_pop(L, 1);
 }
 
+void setupPredefinedColors(lua_State *L)
+{
+    int i = 0;
+    while (predefinedColors[i].name)
+    {
+        setColor(L, &predefinedColors[i++]);
+    }
+}
+
+void readColor(
+    lua_State *L,
+    const char *propertyName,
+    unsigned char *r,
+    unsigned char *g,
+    unsigned char *b)
+{
+    lua_getglobal(L, propertyName);
+    if (!lua_istable(L, -1))
+    {
+        printf("readColor. '%s' should be a table\n", propertyName);
+    }
+    else
+    {
+        *r = tableField(L, "r");
+        *g = tableField(L, "g");
+        *b = tableField(L, "b");
+    }
+    lua_pop(L, 1);
+}
+
 int main(int argc, char *argv[])
 {
     if (argc != 2) {
@@ -98,6 +146,8 @@ int main(int argc, char *argv[])
     lua_State *L = luaL_newstate();
     luaL_openlibs(L);
 
+    setupPredefinedColors(L);
+
     if (loadLuaFile(L, fileName))
     {
         // Read width and height.
@@ -106,6 +156,14 @@ int main(int argc, char *argv[])
         readWidthHeight(L, &width, &height);
         printf("main. width: '%d' height: '%d'\n", width, height);
 
+        // Read background color.
+        unsigned char r = 0;
+        unsigned char g = 0;
+        unsigned char b = 0;
+        readColor(L, "background", &r, &g, &b);
+        printf("main. background: '%d, %d, %d'\n", r, g, b);
+        readColor(L, "foreground", &r, &g, &b);
+        printf("main. foreground: '%d, %d, %d'\n", r, g, b);
 
     }
 
