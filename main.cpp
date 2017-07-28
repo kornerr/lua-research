@@ -3,30 +3,44 @@
 
 #include "lua.hpp"
 
-void load(const char *fileName, int *width, int *height)
+bool loadLuaFile(lua_State *L, const char *fileName)
 {
-    lua_State *L = luaL_newstate();
-    luaL_openlibs(L);
     if (luaL_loadfile(L, fileName) || lua_pcall(L, 0, 0, 0))
     {
-        printf("Cannot run configuration file '%s': '%s'\n", fileName, lua_tostring(L, -1));
-        lua_pop(L, 1);
+        printf(
+            "ERROR. Cannot load Lua file '%s': '%s'\n",
+            fileName,
+            lua_tostring(L, -1));
+        return false;
     }
+    return true;
+}
 
+void readWidthHeight(lua_State *L, int *width, int *height)
+{
+    // Width.
     lua_getglobal(L, "width");
-    lua_getglobal(L, "height");
-    if (!lua_isnumber(L, -2))
-    {
-        printf("'width' should be a number\n");
-    }
     if (!lua_isnumber(L, -1))
     {
-        printf("'height' should be a number\n");
+        printf("readWidthHeight. 'width' should be a number\n");
     }
-    *width = (int)lua_tonumber(L, -2);
-    *height = (int)lua_tonumber(L, -1);
+    else
+    {
+        *width = (int)lua_tonumber(L, -1);
+    }
+    lua_pop(L, 1);
 
-    lua_close(L);
+    // Height.
+    lua_getglobal(L, "height");
+    if (!lua_isnumber(L, -1))
+    {
+        printf("readWidthHeight. 'height' should be a number\n");
+    }
+    else
+    {
+        *height = (int)lua_tonumber(L, -1);
+    }
+    lua_pop(L, 1);
 }
 
 int main(int argc, char *argv[])
@@ -38,11 +52,24 @@ int main(int argc, char *argv[])
 
     const char *fileName = argv[1];
 
-    int width;
-    int height;
-    load(fileName, &width, &height);
+    // Create lua state.
+    lua_State *L = luaL_newstate();
+    luaL_openlibs(L);
 
-    printf("Width: '%d' height: '%d'\n", width, height);
+    if (loadLuaFile(L, fileName))
+    {
+        // Read width and height.
+        int width = 0;
+        int height = 0;
+        readWidthHeight(L, &width, &height);
+        printf("main. width: '%d' height: '%d'\n", width, height);
+
+
+    }
+
+    // Close lua state.
+    lua_close(L);
+
 
     return 0;
 }
