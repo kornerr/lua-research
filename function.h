@@ -4,6 +4,8 @@
 
 #include "lua.hpp"
 
+#include <cmath>
+
 double functionF(lua_State *L, double x, double y)
 {
     lua_getglobal(L, "f");
@@ -22,6 +24,27 @@ double functionF(lua_State *L, double x, double y)
     }
     lua_pop(L, 1);
     return result;
+}
+
+static int l_sin(lua_State *L)
+{
+    double value = luaL_checknumber(L, 1);
+    double result = sin(value);
+    lua_pushnumber(L, result);
+    // Return number of results.
+    return 1;
+}
+
+static const struct luaL_Reg mylib[] =
+{
+    {"mysin", l_sin},
+    {0, 0} // Sentinel.
+};
+
+int luaopen_mylib(lua_State *L)
+{
+    luaL_openlib(L, "mylib", mylib, 0);
+    return 1;
 }
 
 #endif // LUA_RESEARCH_FUNCTION_H

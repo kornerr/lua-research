@@ -56,6 +56,9 @@ int main(int argc, char *argv[])
     lua_State *L = luaL_newstate();
     luaL_openlibs(L);
 
+    // Register mylib.
+    luaopen_mylib(L);
+
     setupPredefinedColors(L);
 
     if (loadLuaFile(L, fileName))
@@ -80,6 +83,7 @@ int main(int argc, char *argv[])
         double y = 3;
         double f = functionF(L, x, y);
         printf("main. '%f' = functionF(%f, %f)\n", f, x, y);
+
     }
 
     // Close lua state.
