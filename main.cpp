@@ -1,5 +1,6 @@
 
 #include "colors.h"
+#include "function.h"
 
 bool loadLuaFile(lua_State *L, const char *fileName)
 {
@@ -74,6 +75,11 @@ int main(int argc, char *argv[])
         readColor(L, "foreground", &r, &g, &b);
         printf("main. foreground: '%d, %d, %d'\n", r, g, b);
 
+        // Execute function.
+        double x = 20;
+        double y = 3;
+        double f = functionF(L, x, y);
+        printf("main. '%f' = functionF(%f, %f)\n", f, x, y);
     }
 
     // Close lua state.
